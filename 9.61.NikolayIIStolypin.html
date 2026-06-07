@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>9.61 Николай II (реформы Столыпина)</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
+body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:16px}
+.card{background:#fff;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.3);width:100%;max-width:560px;padding:32px;animation:rise .5s ease}
+@keyframes rise{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+h1{color:#4a3f8c;font-size:1.5rem;margin-bottom:6px;text-align:center}
+.sub{color:#888;text-align:center;margin-bottom:22px;font-size:1rem}
+label{display:block;margin:14px 0 6px;color:#444;font-weight:600}
+input{width:100%;padding:12px 14px;border:2px solid #e0e0e0;border-radius:10px;font-size:1rem;transition:.2s}
+input:focus{outline:none;border-color:#764ba2}
+.btn{width:100%;margin-top:22px;padding:14px;border:none;border-radius:10px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;font-size:1.05rem;font-weight:600;cursor:pointer;transition:.2s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(118,75,162,.4)}
+.btn:active{transform:translateY(0)}
+.err{color:#e53e3e;text-align:center;margin-top:14px;font-weight:600;min-height:1.2em}
+.hidden{display:none}
+.bar-wrap{height:10px;background:#eee;border-radius:6px;overflow:hidden;margin-bottom:18px}
+.bar{height:100%;width:100%;background:#48bb78;transition:width .25s linear,background .25s}
+.bar.warn{background:#ecc94b}
+.bar.danger{background:#e53e3e;animation:blink .5s steps(2) infinite}
+@keyframes blink{50%{opacity:.35}}
+.qnum{color:#764ba2;font-weight:700;margin-bottom:8px}
+.qtext{font-size:1.2rem;color:#333;margin-bottom:20px;line-height:1.4}
+.opt{display:block;width:100%;text-align:left;padding:14px 16px;margin-bottom:10px;border:2px solid #e0e0e0;border-radius:10px;background:#fafafa;font-size:1rem;cursor:pointer;transition:.15s}
+.opt:hover{border-color:#764ba2;background:#f3effb}
+.res-grade{font-size:4rem;text-align:center;font-weight:800;color:#764ba2;margin:10px 0}
+.res-line{text-align:center;color:#555;margin-bottom:6px}
+.review{margin-top:18px;border-top:1px solid #eee;padding-top:14px}
+.rev-item{padding:8px 0;font-size:.95rem;border-bottom:1px solid #f3f3f3}
+.rev-q{color:#444;font-weight:600}
+.ok{color:#2f855a}.no{color:#c53030}
+</style>
+</head>
+<body>
+<div class="card">
+  <div id="screen-intro">
+    <h1>Николай II</h1>
+    <div class="sub">Реформы Столыпина</div>
+    <label>Имя</label><input id="f-name" autocomplete="off">
+    <label>Фамилия</label><input id="f-surname" autocomplete="off">
+    <label>Класс</label><input id="f-class" autocomplete="off">
+    <button class="btn" onclick="startQuiz()">Начать тест</button>
+    <div class="err" id="intro-err"></div>
+  </div>
+
+  <div id="screen-quiz" class="hidden">
+    <div class="bar-wrap"><div class="bar" id="bar"></div></div>
+    <div class="qnum" id="qnum"></div>
+    <div class="qtext" id="qtext"></div>
+    <div id="opts"></div>
+  </div>
+
+  <div id="screen-result" class="hidden">
+    <h1>Результат</h1>
+    <div class="res-grade" id="r-grade"></div>
+    <div class="res-line" id="r-fio"></div>
+    <div class="res-line" id="r-score"></div>
+    <div class="res-line" id="r-percent"></div>
+    <div class="res-line" id="r-time"></div>
+    <div class="review" id="review"></div>
+    <button class="btn" id="send-btn" onclick="sendResult()">Отправить результат</button>
+    <div class="err" id="send-msg" style="color:#2f855a"></div>
+  </div>
+</div>
+
+<script>
+const GAS_URL = "https://script.google.com/macros/s/AKfycbyAK0g6S7_HTpSWhFYBzXaXsjwGSQQRw7mcL2Z1xWDT6fWzI4FxjSC2PPdPXe9d2c0kgQ/exec";
+const TEST_NAME = "9.61 Николай II (реформы Столыпина)";
+const QUESTIONS = [{"q": "Кто был министром внутренних дел и реформатором, пытавшимся улучшить жизнь крестьян?", "o": [["Пётр Столыпин", true], ["Григорий Распутин", false], ["Сергей Витте", false], ["Степан Макаров", false]]}, {"q": "В чём состояла главная задача аграрной реформы Столыпина?", "o": [["Сделать из крестьян самостоятельных собственников", true], ["Вернуть крепостное право", false], ["Раздать всю землю помещикам", false], ["Закрыть все деревни", false]]}, {"q": "Что разрешала крестьянину аграрная реформа Столыпина?", "o": [["Становиться свободным от общины и жить отдельно", true], ["Уезжать за границу без документов", false], ["Не платить никаких налогов", false], ["Захватывать землю помещика силой", false]]}, {"q": "Чем государство помогало крестьянам, выходящим из общины?", "o": [["Предоставляло земли и деньги на переселение", true], ["Дарило фабрики в городах", false], ["Освобождало от службы в армии", false], ["Выдавало дворянский титул", false]]}, {"q": "Кто был крестьянином, близким другом семьи Николая II, которому приписывали целебные способности?", "o": [["Григорий Распутин", true], ["Пётр Столыпин", false], ["Алексей Куропаткин", false], ["Сергей Витте", false]]}];
+
+const STOP_MAT = ["аборт", "анус", "басран", "бикса", "блуд", "блудилище", "букакке", "вагина", "влагалище", "волосянка", "выеть", "выпердеть", "выпердыш", "выссака", "высцаный", "глиста", "гнида", "говенка", "говешка", "говназия", "говнюха", "говнядина", "говнять", "дермо", "дерьмище", "долдон", "дрист", "дристануть", "дристни", "дура", "дурак", "заговнять", "засерун", "засирать", "засраный", "курвенок", "курвин", "курвяжник", "курвяжница", "курвяжный", "мокрохвостка", "мокрощелка", "моча", "наговнять", "насцать", "нахезать", "недомерок", "обосцать", "обосцаться", "обсирать", "отпороть", "пенис", "перданная", "перданное", "перданный", "пердел", "пердение", "пердильник", "пердунина", "пердунья", "пердуха", "передок", "пернуть", "пипишка", "письку", "писять", "питишка", "плеха", "подхвостие", "попысать", "посрал", "поцоватый", "презерватив", "проскотина", "просраная", "проссаная", "пысать", "растыка", "сволота", "секель", "серун", "серька", "сика", "сикать", "сикель", "сирано", "сирать", "скотина", "скотское", "скуреха", "скурея", "скуряга", "скуряжничать", "сосать", "сосущее", "срака", "сраный", "сраным", "срать", "срун", "ссака", "ссаки", "ссаное", "ссать", "старпер", "струк", "сцавинье", "сцака", "сцаки", "сцание", "сцуль", "сыкун", "титечка", "титечный", "титка", "титочка", "титька", "триговногнойная", "трипер", "триперданутая", "усцаться", "фик", "хезать", "хуй", "жопа", "пизда", "с ушами пизда"];
+const STOP_MEME = ["черемша", "67", "sixseven", "превед", "жиза", "ничоси", "кандибобер", "я думала сова", "ждун", "окаянная", "ахахахаха боже какая гадость", "это фиаско братан", "бабка противна я противен", "слабоумие и отвага", "норм", "краш", "шипперить", "ору", "изнанка", "скибиди туалет", "сигма", "альфа", "бета", "я во рту", "мечтаю", "как деньги но лучше", "у меня нет к этому вопросов", "это база", "сначала база потом академия", "а что если", "сплэш вест", "срочно нц", "ливнул", "го", "трэш", "кринж", "испанский стыд", "рофл", "рили", "паль", "спалился", "шок контент", "еду в поезде", "сосёчка", "девочка с каре", "не вывожу", "синдром утёнка", "а мне всё равно", "ваще не о чём", "я затупил", "сложные минуты", "миньон", "ты норм", "это какой-то позор", "ой всё", "танцы кнопка бабло", "где логика", "я не знает", "падажжи", "убей себя об стену", "вжух", "ахахах вау"];
+
+function normA(s){
+  s=s.toLowerCase();
+  const map={'a':'а','e':'е','o':'о','p':'р','c':'с','x':'х','y':'у','k':'к','m':'м','t':'т','h':'н','b':'в','3':'з','0':'о','4':'ч','1':'и','@':'а','$':'с'};
+  let r='';for(const ch of s){r+=map[ch]||ch;}
+  r=r.replace(/[^а-яё ]/g,'');
+  r=r.replace(/(.)\1+/g,'$1');
+  return r.trim();
+}
+function normB(s){
+  s=s.toLowerCase().replace(/й/g,'и').replace(/ё/g,'е');
+  s=s.replace(/[^а-я]/g,'');
+  s=s.replace(/(.)\1+/g,'$1');
+  return s;
+}
+function isBad(raw){
+  const a=normA(raw), b=normB(raw);
+  for(const w of STOP_MAT.concat(STOP_MEME)){
+    const wa=normA(w), wb=normB(w);
+    if(wa && (a.includes(wa))) return true;
+    if(wb && (b.includes(wb))) return true;
+  }
+  return false;
+}
+
+let order=[], cur=0, wrong=0, secsLeft=6, timer=null, answers=[], student={};
+
+function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
+
+function startQuiz(){
+  const name=document.getElementById('f-name').value.trim();
+  const surname=document.getElementById('f-surname').value.trim();
+  const klass=document.getElementById('f-class').value.trim();
+  const err=document.getElementById('intro-err');
+  if(!name||!surname||!klass){err.textContent='Заполни все поля';return;}
+  for(const v of [name,surname,klass]){
+    if(isBad(v)){
+      err.textContent='Все мы посмеялись с твоего смешного «'+v+'». А теперь в конце урока сдаёшь тетрадь :)';
+      return;
+    }
+  }
+  student={name,surname,klass};
+  err.textContent='';
+  order=shuffle([...Array(QUESTIONS.length).keys()]);
+  cur=0;wrong=0;answers=[];
+  document.getElementById('screen-intro').classList.add('hidden');
+  document.getElementById('screen-quiz').classList.remove('hidden');
+  renderQ();
+}
+
+function renderQ(){
+  clearInterval(timer);
+  const qi=order[cur];
+  const q=QUESTIONS[qi];
+  document.getElementById('qnum').textContent='Вопрос '+(cur+1)+' из '+QUESTIONS.length;
+  document.getElementById('qtext').textContent=q.q;
+  const opts=document.getElementById('opts');
+  opts.innerHTML='';
+  const shuffled=shuffle(q.o.map((o,idx)=>({text:o[0],correct:o[1]})));
+  shuffled.forEach(o=>{
+    const b=document.createElement('button');
+    b.className='opt';b.textContent=o.text;
+    b.onclick=()=>answer(o.correct,o.text,q);
+    opts.appendChild(b);
+  });
+  secsLeft=6;
+  updateBar();
+  timer=setInterval(()=>{
+    secsLeft-=0.1;
+    if(secsLeft<=0){clearInterval(timer);answer(false,'(не успел)',q);}
+    else updateBar();
+  },100);
+}
+
+function updateBar(){
+  const bar=document.getElementById('bar');
+  const pct=Math.max(0,secsLeft/6*100);
+  bar.style.width=pct+'%';
+  bar.className='bar'+(pct<25?' danger':pct<50?' warn':'');
+}
+
+function answer(correct,chosen,q){
+  clearInterval(timer);
+  const right=q.o.find(o=>o[1])[0];
+  if(!correct)wrong++;
+  answers.push({q:q.q,chosen,right,correct});
+  cur++;
+  if(cur<QUESTIONS.length)renderQ();
+  else showResult();
+}
+
+const SCALE={0:'5',1:'4',2:'4−',3:'3',4:'2',5:'2'};
+
+function showResult(){
+  document.getElementById('screen-quiz').classList.add('hidden');
+  document.getElementById('screen-result').classList.remove('hidden');
+  const total=QUESTIONS.length, correct=total-wrong;
+  const percent=Math.round(correct/total*100);
+  const grade=SCALE[wrong];
+  const now=new Date();
+  const dt=now.toLocaleString('ru-RU');
+  document.getElementById('r-grade').textContent=grade;
+  document.getElementById('r-fio').textContent=student.surname+' '+student.name+', '+student.klass+' класс';
+  document.getElementById('r-score').textContent='Правильно: '+correct+' из '+total+' (ошибок: '+wrong+')';
+  document.getElementById('r-percent').textContent='Процент: '+percent+'%';
+  document.getElementById('r-time').textContent=dt;
+  const rev=document.getElementById('review');
+  rev.innerHTML='';
+  answers.forEach((a,i)=>{
+    const d=document.createElement('div');d.className='rev-item';
+    d.innerHTML='<span class="rev-q">'+(i+1)+'. '+a.q+'</span><br>'+
+      '<span class="'+(a.correct?'ok':'no')+'">Ты: '+a.chosen+'</span>'+
+      (a.correct?'':' &nbsp; <span class="ok">Верно: '+a.right+'</span>');
+    rev.appendChild(d);
+  });
+  window._payload={
+    fullName:student.surname+' '+student.name,
+    firstName:student.name,
+    lastName:student.surname,
+    class:student.klass,
+    school:'',
+    datetime:dt,
+    correct:correct,
+    total:total,
+    wrong:wrong,
+    percent:percent,
+    grade:grade,
+    answers:answers.map((a,i)=>(i+1)+') '+(a.correct?'верно':'ошибка ('+a.chosen+' → '+a.right+')')).join('; '),
+    test:TEST_NAME
+  };
+  sendResult(true);
+}
+
+function sendResult(auto){
+  const msg=document.getElementById('send-msg');
+  fetch(GAS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(window._payload)})
+    .then(()=>{msg.textContent='Результат отправлен ✓';})
+    .catch(()=>{msg.textContent='Ошибка отправки, нажми кнопку ещё раз';msg.style.color='#c53030';});
+  if(!auto)msg.textContent='Отправляю...';
+}
+</script>
+</body>
+</html>

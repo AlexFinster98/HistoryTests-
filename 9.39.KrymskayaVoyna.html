@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Крымская катастрофа — Тест-полминутка</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body {
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+  min-height:100vh; display:flex; align-items:center; justify-content:center;
+  padding:16px; color:#2d2d3a;
+}
+.card {
+  background:#fff; border-radius:24px; box-shadow:0 20px 60px rgba(0,0,0,.3);
+  width:100%; max-width:540px; padding:32px 28px; animation:rise .5s ease;
+}
+@keyframes rise { from{opacity:0; transform:translateY(30px);} to{opacity:1; transform:translateY(0);} }
+.screen { display:none; }
+.screen.active { display:block; }
+h1 { font-size:26px; text-align:center; color:#5a3d8a; margin-bottom:6px; line-height:1.2; }
+.sub { text-align:center; color:#888; font-size:14px; margin-bottom:24px; }
+.field { margin-bottom:14px; }
+.field label { display:block; font-size:13px; color:#666; margin-bottom:6px; font-weight:600; }
+.field input {
+  width:100%; padding:13px 14px; border:2px solid #e3e3ef; border-radius:12px;
+  font-size:16px; transition:border-color .2s; outline:none;
+}
+.field input:focus { border-color:#764ba2; }
+.btn {
+  width:100%; padding:15px; border:none; border-radius:14px; cursor:pointer;
+  background:linear-gradient(135deg,#667eea,#764ba2); color:#fff;
+  font-size:17px; font-weight:700; margin-top:10px; transition:transform .1s,opacity .2s;
+}
+.btn:active { transform:scale(.98); }
+.btn:disabled { opacity:.5; cursor:not-allowed; }
+.err { color:#e23b3b; font-size:13px; text-align:center; margin-top:10px; min-height:18px; line-height:1.4; }
+.qhead { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.qcount { font-size:14px; color:#888; font-weight:600; }
+.timebar-wrap { width:100%; height:10px; background:#eee; border-radius:6px; overflow:hidden; margin-bottom:22px; }
+.timebar { height:100%; width:100%; background:#56c271; border-radius:6px; transition:width .1s linear,background .2s; }
+.timebar.warn { background:#f0a830; }
+.timebar.danger { background:#e23b3b; animation:blink .5s steps(2) infinite; }
+@keyframes blink { 50%{opacity:.35;} }
+.qtext { font-size:20px; font-weight:700; margin-bottom:20px; line-height:1.35; min-height:56px; }
+.opt {
+  display:block; width:100%; text-align:left; padding:14px 16px; margin-bottom:11px;
+  border:2px solid #e3e3ef; border-radius:13px; background:#fafaff; cursor:pointer;
+  font-size:16px; transition:all .15s; color:#2d2d3a;
+}
+.opt:active { transform:scale(.99); }
+.opt:hover { border-color:#b9a8e0; }
+.result-grade { font-size:64px; font-weight:800; text-align:center; color:#5a3d8a; margin:8px 0; }
+.result-line { text-align:center; font-size:16px; color:#555; margin-bottom:6px; }
+.result-dt { text-align:center; font-size:13px; color:#999; margin-top:14px; }
+.send-status { text-align:center; font-size:13px; margin-top:14px; min-height:18px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <!-- INTRO -->
+  <div class="screen active" id="intro">
+    <h1>Крымская катастрофа</h1>
+    <div class="sub">Оборона Севастополя</div>
+    <div class="field"><label>Имя</label><input id="fname" autocomplete="off"></div>
+    <div class="field"><label>Фамилия</label><input id="lname" autocomplete="off"></div>
+    <div class="field"><label>Класс</label><input id="klass" autocomplete="off" placeholder="например, 9А"></div>
+    <button class="btn" id="startBtn">Начать тест</button>
+    <div class="err" id="introErr"></div>
+  </div>
+  <!-- QUIZ -->
+  <div class="screen" id="quiz">
+    <div class="qhead"><span class="qcount" id="qcount"></span></div>
+    <div class="timebar-wrap"><div class="timebar" id="timebar"></div></div>
+    <div class="qtext" id="qtext"></div>
+    <div id="opts"></div>
+  </div>
+  <!-- RESULT -->
+  <div class="screen" id="result">
+    <h1>Готово!</h1>
+    <div class="result-grade" id="grade"></div>
+    <div class="result-line" id="rline"></div>
+    <div class="result-dt" id="rdt"></div>
+    <div class="send-status" id="sendStatus"></div>
+    <button class="btn" id="resendBtn" style="display:none;">Отправить результат ещё раз</button>
+  </div>
+</div>
+<script>
+const GAS_URL = "https://script.google.com/macros/s/AKfycbyAK0g6S7_HTpSWhFYBzXaXsjwGSQQRw7mcL2Z1xWDT6fWzI4FxjSC2PPdPXe9d2c0kgQ/exec";
+const TEST_ID = "9.39 Николай I (Крымская, Севастополь)";
+const TIME_PER_Q = 6; // секунд
+const STOP_MAT = ["аборт", "анус", "басран", "бикса", "блуд", "блудилище", "букакке", "вагина", "влагалище", "волосянка", "выеть", "выпердеть", "выпердыш", "выссака", "высцаный", "глиста", "гнида", "говенка", "говешка", "говназия", "говнюха", "говнядина", "говнять", "дермо", "дерьмище", "долдон", "дрист", "дристануть", "дристни", "дура", "дурак", "заговнять", "засерун", "засирать", "засраный", "курвенок", "курвин", "курвяжник", "курвяжница", "курвяжный", "мокрохвостка", "мокрощелка", "моча", "наговнять", "насцать", "нахезать", "недомерок", "обосцать", "обосцаться", "обсирать", "отпороть", "пенис", "перданная", "перданное", "перданный", "пердел", "пердение", "пердильник", "пердунина", "пердунья", "пердуха", "передок", "пернуть", "пипишка", "письку", "писять", "питишка", "плеха", "подхвостие", "попысать", "посрал", "поцоватый", "презерватив", "проскотина", "просраная", "проссаная", "пысать", "растыка", "сволота", "секель", "серун", "серька", "сика", "сикать", "сикель", "сирано", "сирать", "скотина", "скотское", "скуреха", "скурея", "скуряга", "скуряжничать", "сосать", "сосущее", "срака", "сраный", "сраным", "срать", "срун", "ссака", "ссаки", "ссаное", "ссать", "старпер", "струк", "сцавинье", "сцака", "сцаки", "сцание", "сцуль", "сыкун", "титечка", "титечный", "титка", "титочка", "титька", "триговногнойная", "трипер", "триперданутая", "усцаться", "фик", "хезать", "хуй", "жопа", "пизда", "с ушами пизда"];
+const STOP_MEME = ["черемша", "67", "sixseven", "превед", "жиза", "ничоси", "кандибобер", "я думала сова", "ждун", "окаянная", "ахахахаха боже какая гадость", "это фиаско братан", "бабка противна я противен", "слабоумие и отвага", "норм", "краш", "шипперить", "ору", "изнанка", "скибиди туалет", "сигма", "альфа", "бета", "я во рту", "мечтаю", "как деньги но лучше", "у меня нет к этому вопросов", "это база", "сначала база потом академия", "а что если", "сплэш вест", "срочно нц", "ливнул", "го", "трэш", "кринж", "испанский стыд", "рофл", "рили", "паль", "спалился", "шок контент", "еду в поезде", "сосёчка", "девочка с каре", "не вывожу", "синдром утёнка", "а мне всё равно", "ваще не о чём", "я затупил", "сложные минуты", "миньон", "ты норм", "это какой-то позор", "ой всё", "танцы кнопка бабло", "где логика", "я не знает", "падажжи", "убей себя об стену", "вжух", "ахахах вау"];
+let QUESTIONS = [{"q": "Осаду какого города вели англичане и французы в Крыму?", "o": [["Севастополя", true], ["Москвы", false], ["Киева", false], ["Одессы", false]]}, {"q": "Что русские затопили, чтобы преградить путь вражеским кораблям?", "o": [["Парусные суда", true], ["Мосты", false], ["Понтоны", false], ["Маяки", false]]}, {"q": "Какой знаменитый адмирал погиб летом 1855 года при обороне?", "o": [["Нахимов", true], ["Барклай-де-Толли", false], ["Тормасов", false], ["Дибич", false]]}, {"q": "Кому пришлось заканчивать войну после Николая I?", "o": [["Его сыну Александру", true], ["Брату Михаилу", false], ["Кутузову", false], ["Сперанскому", false]]}, {"q": "Чего лишилась Россия по итогам войны?", "o": [["Части территорий и права торговать в Чёрном море", true], ["Всей Сибири", false], ["Москвы", false], ["Польши и Финляндии", false]]}];
+
+// ---- цензура: двойная нормализация ----
+const LAT2CYR = {a:'а',b:'в',c:'с',e:'е',h:'н',k:'к',m:'м',o:'о',p:'р',t:'т',x:'х',y:'у'};
+function normBase(s){
+  s = (s||"").toLowerCase().replace(/ё/g,'е');
+  s = s.replace(/[a-z]/g, ch => LAT2CYR[ch] || ch);
+  s = s.replace(/[^a-zа-я0-9]/g,'');
+  return s;
+}
+function normCollapse(s){ return s.replace(/(.)\1+/g,'$1'); }
+function checkStop(raw){
+  const n1 = normBase(raw);
+  const n2 = normCollapse(n1);
+  const lists = STOP_MAT.concat(STOP_MEME);
+  for(const w of lists){
+    const wn = normBase(w);
+    if(!wn) continue;
+    if(n1.includes(wn) || n2.includes(normCollapse(wn))) return true;
+  }
+  return false;
+}
+
+// ---- утилиты ----
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function $(id){ return document.getElementById(id); }
+function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); $(id).classList.add('active'); }
+
+// ---- состояние ----
+let order=[], idx=0, wrong=0, answersLog=[], timer=null, startTs=0;
+let fname="", lname="", klass="";
+
+$('startBtn').addEventListener('click', ()=>{
+  fname=$('fname').value.trim(); lname=$('lname').value.trim(); klass=$('klass').value.trim();
+  const err=$('introErr');
+  const raw = $('fname').value+" "+$('lname').value+" "+$('klass').value;
+  if(checkStop(raw)){
+    const shown = ($('fname').value+" "+$('lname').value+" "+$('klass').value).trim();
+    err.textContent = "Все мы посмеялись с твоего смешного «"+shown+"». А теперь в конце урока сдаёшь тетрадь :)";
+    return;
+  }
+  if(!fname || !lname || !klass){ err.textContent="Заполни Имя, Фамилию и Класс."; return; }
+  err.textContent="";
+  // перемешиваем вопросы и варианты
+  QUESTIONS = shuffle(QUESTIONS).map(q=>({q:q.q, o:shuffle(q.o)}));
+  order = QUESTIONS; idx=0; wrong=0; answersLog=[];
+  show('quiz'); renderQ();
+});
+
+function renderQ(){
+  const q = order[idx];
+  $('qcount').textContent = "Вопрос "+(idx+1)+" из "+order.length;
+  $('qtext').textContent = q.q;
+  const box=$('opts'); box.innerHTML="";
+  q.o.forEach(opt=>{
+    const b=document.createElement('button');
+    b.className='opt'; b.textContent=opt[0];
+    b.addEventListener('click', ()=>answer(opt[1], opt[0]));
+    box.appendChild(b);
+  });
+  startTimer();
+}
+
+function startTimer(){
+  const bar=$('timebar'); bar.className='timebar'; bar.style.width='100%';
+  startTs=Date.now();
+  clearInterval(timer);
+  timer=setInterval(()=>{
+    const elapsed=(Date.now()-startTs)/1000;
+    let pct=Math.max(0,(1-elapsed/TIME_PER_Q))*100;
+    bar.style.width=pct+'%';
+    bar.className='timebar'+(pct<25?' danger':(pct<50?' warn':''));
+    if(elapsed>=TIME_PER_Q){ clearInterval(timer); timeout(); }
+  },80);
+}
+
+function answer(correct, text){
+  clearInterval(timer);
+  if(!correct) wrong++;
+  answersLog.push((idx+1)+":"+(correct?"✓":"✗"));
+  next();
+}
+function timeout(){
+  wrong++;
+  answersLog.push((idx+1)+":⏱");
+  next();
+}
+function next(){
+  idx++;
+  if(idx<order.length) renderQ(); else finish();
+}
+
+function gradeFor(w){
+  if(w===0) return "5";
+  if(w===1) return "4";
+  if(w===2) return "4−";
+  if(w===3) return "3";
+  return "2";
+}
+function pad(n){ return n<10?"0"+n:n; }
+function nowStr(){
+  const d=new Date();
+  return pad(d.getDate())+"."+pad(d.getMonth()+1)+"."+d.getFullYear()+" "+pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds());
+}
+
+let payload=null;
+function finish(){
+  const total=order.length;
+  const correct=total-wrong;
+  const grade=gradeFor(wrong);
+  const percent=Math.round(correct/total*100);
+  const dt=nowStr();
+  $('grade').textContent=grade;
+  $('rline').textContent="Правильно: "+correct+" из "+total+" ("+percent+"%)";
+  $('rdt').textContent=dt;
+  show('result');
+  payload={
+    fullName:(lname+" "+fname).trim(),
+    firstName:fname, lastName:lname, class:klass, school:"",
+    datetime:dt, correct:correct, total:total, wrong:wrong,
+    percent:percent, grade:grade, answers:answersLog.join(", "), test:TEST_ID
+  };
+  sendResult();
+}
+
+function sendResult(){
+  const st=$('sendStatus'); st.textContent="Отправка результата…"; st.style.color="#888";
+  $('resendBtn').style.display="none";
+  fetch(GAS_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)})
+    .then(()=>{ st.textContent="✓ Результат отправлен"; st.style.color="#3a9d4a"; })
+    .catch(()=>{ st.textContent="Не удалось отправить автоматически."; st.style.color="#e23b3b"; $('resendBtn').style.display="block"; });
+}
+$('resendBtn').addEventListener('click', sendResult);
+</script>
+</body>
+</html>
